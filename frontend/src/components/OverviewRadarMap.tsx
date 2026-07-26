@@ -58,7 +58,7 @@ export default function OverviewRadarMap() {
         bearing: -15,
         antialias: true,
         interactive: true,
-      });
+      } as maplibregl.MapOptions & { antialias?: boolean });
 
       mapInstance.current.on('load', () => {
         incidents.forEach((inc) => {
