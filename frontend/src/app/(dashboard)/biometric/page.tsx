@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { fetchBiometricSearch, fetchLinkedCases } from '@/lib/api';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import { Fingerprint, Search, AlertTriangle, ShieldCheck, ExternalLink } from 'l
 import FingerprintScanner from '@/components/FingerprintScanner';
 import BiometricModuleTabs from '@/components/BiometricModuleTabs';
 
-export default function BiometricSearchPage() {
+function BiometricSearchContent() {
   const searchParams = useSearchParams();
   const refId = searchParams.get('ref_id') || '';
   const accusedId = searchParams.get('accused_id') || '';
@@ -29,7 +29,7 @@ export default function BiometricSearchPage() {
           if (res) {
             setResult(res);
             setTimeout(() => {
-              resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
           } else {
             setError('No biometric records found for this accused person.');
@@ -47,7 +47,7 @@ export default function BiometricSearchPage() {
           if (res) {
             setResult(res);
             setTimeout(() => {
-              resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
           } else {
             setError('Search failed. Please try again.');
@@ -240,5 +240,19 @@ export default function BiometricSearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function BiometricSearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="cmd-panel p-10 flex items-center justify-center text-xs font-mono text-zinc-500">
+          INITIALIZING BIOMETRIC MODULE...
+        </div>
+      }
+    >
+      <BiometricSearchContent />
+    </Suspense>
   );
 }
