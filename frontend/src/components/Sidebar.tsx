@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import kspLogo from '@/public/ksp-logo.png';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
