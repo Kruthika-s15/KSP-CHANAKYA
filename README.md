@@ -44,4 +44,4 @@ Cases. People. Places. Biometrics. Cameras. Patterns. All in one place.
 ## 📜 License & Support
 Developed for educational, research, and demonstration purposes.
 
-#### ⭐ If you find this project interesting, give it a star on GitHub!
+
