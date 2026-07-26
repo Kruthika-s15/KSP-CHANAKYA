@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Camera, Siren, Radio, ShieldCheck, X, Eye, AlertTriangle } from 'lucide-react';
+import { Camera, Siren, Radio, ShieldCheck, X, Eye } from 'lucide-react';
 
 /* ================================================================== */
-/*  RASTER STYLE — guaranteed dark tiles                               */
+/*  RASTER STYLE — guaranteed dark tiles                              */
 /* ================================================================== */
 const RASTER_STYLE: maplibregl.StyleSpecification = {
   version: 8,
@@ -26,7 +26,7 @@ const RASTER_STYLE: maplibregl.StyleSpecification = {
 };
 
 /* ================================================================== */
-/*  CCTV NODES                                                         */
+/*  CCTV NODES                                                        */
 /* ================================================================== */
 const CCTV_NODES = [
   { id: 'CAM-MJ-014', lng: 77.5713, lat: 12.9767, name: 'Majestic Junction', jurisdiction: 'Central HQ', status: 'Active' },
@@ -39,7 +39,7 @@ const CCTV_NODES = [
 ];
 
 /* ================================================================== */
-/*  JURISDICTION POLYGON BOUNDARIES (simplified convex hulls)          */
+/*  JURISDICTION POLYGON BOUNDARIES                                   */
 /* ================================================================== */
 const JURISDICTIONS: { name: string; color: string; coords: [number, number][] }[] = [
   {
@@ -77,7 +77,7 @@ const JURISDICTIONS: { name: string; color: string; coords: [number, number][] }
 ];
 
 /* ================================================================== */
-/*  PATROL UNITS                                                       */
+/*  PATROL UNITS                                                      */
 /* ================================================================== */
 const PATROL_UNITS = [
   { id: 'PCR-11', lng: 77.5800, lat: 12.9800, name: 'Hoysala PCR-11' },
@@ -86,7 +86,7 @@ const PATROL_UNITS = [
 ];
 
 /* ================================================================== */
-/*  FEED EVENTS                                                        */
+/*  FEED EVENTS                                                       */
 /* ================================================================== */
 const FEED_EVENTS = [
   'Motion detected — routine pedestrian flow',
@@ -99,7 +99,7 @@ const FEED_EVENTS = [
 ];
 
 /* ================================================================== */
-/*  HELPERS                                                             */
+/*  HELPERS                                                           */
 /* ================================================================== */
 function haversine(a: { lng: number; lat: number }, b: { lng: number; lat: number }) {
   const R = 6371;
@@ -123,7 +123,7 @@ function makeDomEl(className: string, innerHTML?: string) {
 }
 
 /* ================================================================== */
-/*  COMPONENT                                                          */
+/*  COMPONENT                                                         */
 /* ================================================================== */
 type GeoCase = {
   CaseMasterID?: string | number;
@@ -155,6 +155,7 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    // Added type assertion to avoid MapOptions property errors
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: RASTER_STYLE,
@@ -163,7 +164,8 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
       pitch: 50,
       bearing: -20,
       antialias: true,
-    });
+    } as maplibregl.MapOptions & { antialias?: boolean });
+
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
@@ -193,7 +195,7 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
         });
       });
 
-      /* ---- 3D building extrusion (simulated from polygons) ---- */
+      /* ---- 3D building extrusion ---- */
       const buildingBlocks = [
         { coords: [[77.5935,12.9725],[77.5955,12.9725],[77.5955,12.9710],[77.5935,12.9710],[77.5935,12.9725]], h: 40 },
         { coords: [[77.5960,12.9745],[77.5980,12.9745],[77.5980,12.9730],[77.5960,12.9730],[77.5960,12.9745]], h: 60 },
@@ -280,7 +282,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
       setReady(true);
     });
 
-    // Fallback force-ready
     setTimeout(() => setReady(true), 800);
 
     return () => {
@@ -308,27 +309,22 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
     const map = mapRef.current;
     if (!map) return;
 
-    // Pick a random CCTV node as the incident site
     const incident = CCTV_NODES[Math.floor(Math.random() * CCTV_NODES.length)];
-    // Find nearest patrol unit
     const nearest = PATROL_UNITS.reduce((best, u) =>
       haversine(incident, u) < haversine(incident, best) ? u : best,
       PATROL_UNITS[0],
     );
 
-    // SOS beacon marker
     const sosEl = makeDomEl('sos-beacon');
     const sosMarker = new maplibregl.Marker({ element: sosEl })
       .setLngLat([incident.lng, incident.lat])
       .addTo(map);
 
-    // Patrol unit marker
     const patrolEl = makeDomEl('patrol-unit-marker', `<span>${nearest.id}</span>`);
     const patrolMarker = new maplibregl.Marker({ element: patrolEl })
       .setLngLat([nearest.lng, nearest.lat])
       .addTo(map);
 
-    // Draw dispatch route line
     const routeSrc = map.getSource('dispatch-route') as maplibregl.GeoJSONSource | undefined;
     routeSrc?.setData({
       type: 'FeatureCollection',
@@ -342,14 +338,11 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
       }],
     });
 
-    // Fly to scene
     map.flyTo({ center: [incident.lng, incident.lat], zoom: 15, pitch: 55, duration: 1200 });
 
-    // Show dispatch card
     const jurisdiction = incident.jurisdiction || 'Central';
     setDispatchCard({ unit: nearest.name, target: incident.name, jurisdiction, eta: 4 });
 
-    // Log entry
     idRef.current += 1;
     setLog((prev) => [{
       id: idRef.current,
@@ -357,9 +350,8 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
       cam: incident.id,
     }, ...prev].slice(0, 8));
 
-    // Animate patrol unit moving toward incident
     const startTime = performance.now();
-    const duration = 4000; // 4 seconds
+    const duration = 4000;
 
     const animate = (now: number) => {
       const t = Math.min((now - startTime) / duration, 1);
@@ -367,7 +359,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
       const lat = lerp(nearest.lat, incident.lat, t);
       patrolMarker.setLngLat([lng, lat]);
 
-      // Update the route line to show remaining path
       routeSrc?.setData({
         type: 'FeatureCollection',
         features: [{
@@ -380,14 +371,12 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
         }],
       });
 
-      // Update ETA in dispatch card
       const remainingSecs = Math.ceil((1 - t) * 4);
       setDispatchCard((prev) => prev ? { ...prev, eta: remainingSecs } : null);
 
       if (t < 1) {
         animFrameRef.current = requestAnimationFrame(animate);
       } else {
-        // Arrived — clean up after a delay
         setTimeout(() => {
           sosMarker.remove();
           patrolMarker.remove();
@@ -401,7 +390,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
 
   return (
     <div className="cmd-panel overflow-hidden min-h-[500px] h-full flex flex-col w-full relative">
-      {/* ---- Header ---- */}
       <div className="p-4 flex items-center justify-between flex-wrap gap-2 shrink-0 border-b border-zinc-800 bg-zinc-900/80 z-20 relative">
         <div>
           <p className="cmd-eyebrow mb-1">KSP // Geospatial Command — 3D Basemap</p>
@@ -416,9 +404,7 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
         </button>
       </div>
 
-      {/* ---- Body ---- */}
       <div className="flex-1 flex relative w-full overflow-hidden">
-        {/* ---- Map ---- */}
         <div className="flex-1 relative h-full w-full bg-[#0a0a0a]">
           <div ref={containerRef} className="absolute inset-0 w-full h-full z-0" />
           {!ready && (
@@ -427,7 +413,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
             </div>
           )}
 
-          {/* ---- Dispatch Card Overlay ---- */}
           {dispatchCard && (
             <div className="absolute top-4 left-4 z-30 bg-black/90 border-2 border-red-500 rounded-lg p-4 max-w-xs shadow-[0_0_30px_rgba(239,68,68,0.4)]">
               <div className="flex items-center gap-2 mb-2">
@@ -445,7 +430,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
             </div>
           )}
 
-          {/* ---- Bottom labels ---- */}
           <div className="absolute bottom-3 left-3 z-10 bg-black/60 border border-zinc-700 rounded px-2 py-1 pointer-events-none">
             <span className="font-data text-[10px] text-zinc-400">
               3D Extrusions · Jurisdiction Zones · CCTV + Dispatch Simulated
@@ -453,10 +437,8 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
           </div>
         </div>
 
-        {/* ---- Right Panel: CCTV Drawer OR Feed ---- */}
         <div className="w-80 border-l border-zinc-800 flex flex-col h-full bg-zinc-950/90 backdrop-blur z-10 shrink-0">
           {selectedCam ? (
-            /* ---- SELECTED CAMERA DETAIL DRAWER ---- */
             <div className="flex flex-col h-full">
               <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -468,7 +450,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
                 </button>
               </div>
 
-              {/* simulated camera feed */}
               <div className="aspect-video bg-black border-b border-zinc-800 relative overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
@@ -476,11 +457,9 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
                     <span className="text-xs text-zinc-500 font-data">LIVE FEED SIMULATION</span>
                   </div>
                 </div>
-                {/* scan line effect */}
                 <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
                   <div className="w-full h-0.5 bg-emerald-500/80 absolute" style={{ animation: 'scanline 3s linear infinite' }} />
                 </div>
-                {/* timestamp */}
                 <div className="absolute bottom-2 right-2 text-[10px] font-data text-red-400 bg-black/70 px-1.5 py-0.5 rounded">
                   ● REC
                 </div>
@@ -519,7 +498,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
               </div>
             </div>
           ) : (
-            /* ---- DEFAULT: LIVE CCTV FEED LOG ---- */
             <div className="flex flex-col h-full">
               <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2 text-xs font-semibold text-zinc-300 uppercase tracking-wider shrink-0">
                 <Radio className="w-3.5 h-3.5 text-red-400" />
@@ -545,7 +523,6 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
         </div>
       </div>
 
-      {/* ---- Inline keyframes ---- */}
       <style>{`
         .city-twin-cctv-marker {
           width: 28px;
