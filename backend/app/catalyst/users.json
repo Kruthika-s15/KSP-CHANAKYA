@@ -1,0 +1,16 @@
+{
+    "kruthikaramya04@gmail.com": {
+        "fullName": "Kruthika S",
+        "kgid": "123456",
+        "station": "MG Road",
+        "email": "kruthikaramya04@gmail.com",
+        "password_hash": "c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646"
+    },
+    "123456": {
+        "fullName": "Kruthika S",
+        "kgid": "123456",
+        "station": "MG Road",
+        "email": "kruthikaramya04@gmail.com",
+        "password_hash": "c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646"
+    }
+}

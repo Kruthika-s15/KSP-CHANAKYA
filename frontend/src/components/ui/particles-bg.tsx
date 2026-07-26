@@ -1,0 +1,69 @@
+"use client";
+
+import { useEffect, useCallback } from "react";
+
+export default function ParticlesComponent() {
+  const initParticles = useCallback(() => {
+    const oldCanvas = document.querySelector("#particles-js canvas");
+    if (oldCanvas) oldCanvas.remove();
+
+    // @ts-ignore
+    if (typeof window !== "undefined" && window.particlesJS) {
+      // @ts-ignore
+      window.particlesJS("particles-js", {
+        particles: {
+          number: { value: 100, density: { enable: true, value_area: 800 } },
+          color: { value: "#ffffff" },
+          shape: { type: "circle" },
+          opacity: { value: 0.6, random: true },
+          size: { value: 2.5, random: true },
+          line_linked: {
+            enable: true,
+            distance: 140,
+            color: "#ff4d4d",
+            opacity: 0.25,
+            width: 1,
+          },
+          move: { enable: true, speed: 1.2, random: true, out_mode: "bounce" },
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: { enable: true, mode: "grab" },
+            resize: true,
+          },
+          modes: {
+            grab: { distance: 180, line_linked: { opacity: 0.6 } },
+          },
+        },
+        retina_detect: true,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      initParticles();
+    };
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, [initParticles]);
+
+  return (
+    <div
+      id="particles-js"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+    />
+  );
+}
