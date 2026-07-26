@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchCatalystNotifications } from '@/lib/api';
+import kspLogo from '@/public/ksp-logo.png';
 
 export default function Header() {
   const [now, setNow] = useState<Date | null>(null);
