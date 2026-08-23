@@ -16,12 +16,13 @@ export default function UploadEvidenceButton({ caseId }: { caseId: number | stri
       try {
         await uploadEvidence(caseId, files);
         toast.success("Evidence uploaded successfully!", { id: "upload-evidence" });
-        // Optionally refresh the page to show the new evidence
         window.location.reload();
       } catch (err: any) {
+        console.error("Evidence upload error:", err);
         toast.error(err.message || "Upload failed", { id: "upload-evidence" });
       } finally {
         setLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     }
   };
@@ -31,6 +32,7 @@ export default function UploadEvidenceButton({ caseId }: { caseId: number | stri
       <input 
         type="file" 
         multiple 
+        accept="image/*,.pdf,audio/*,video/*"
         className="hidden" 
         ref={fileInputRef} 
         onChange={handleFileChange} 
