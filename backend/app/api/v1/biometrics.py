@@ -189,21 +189,29 @@ async def identify_fingerprint(
     if not sample_bytes:
         raise HTTPException(status_code=400, detail="Sample image is required.")
 
-    # 1. Fetch all biometric records of type FINGERPRINT
-    query = select(BiometricRecord).filter(BiometricRecord.BiometricType == "FINGERPRINT")
+    # 1. Fetch all biometric records of type FINGERPRINT + Accused Name to find the file
+    query = (
+        select(BiometricRecord, Accused.AccusedName)
+        .join(Accused, BiometricRecord.AccusedMasterID == Accused.AccusedMasterID)
+        .filter(BiometricRecord.BiometricType == "FINGERPRINT")
+    )
     result = await db.execute(query)
-    records = result.scalars().all()
+    records = result.all()
 
     max_score = 0.0
     best_match_id = None
     best_visualization = None
 
-    for record in records:
-        if not record.Remarks or not os.path.exists(record.Remarks):
+    # Base directory for the dataset (3 levels up from app/api/v1/)
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+    for record, accused_name in records:
+        filepath = os.path.join(base_dir, "dataset", f"{accused_name}.BMP")
+        if not os.path.exists(filepath):
             continue
         
         try:
-            with open(record.Remarks, "rb") as f:
+            with open(filepath, "rb") as f:
                 target_bytes = f.read()
                 
             match_result = compare_fingerprints(sample_bytes, target_bytes)
