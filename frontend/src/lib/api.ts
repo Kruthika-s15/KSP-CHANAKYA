@@ -59,6 +59,40 @@ export async function fetchCasePeople(id: number | string) {
   return res.json();
 }
 
+export async function createCase(payload: any) {
+  const res = await fetch(`${API_BASE}/crimes`, {
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to create case');
+  return res.json();
+}
+
+export async function fetchEvidence(caseId: number | string) {
+  const res = await fetch(`${API_BASE}/evidence/${caseId}`, { cache: 'no-store', headers: getHeaders() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function uploadEvidence(caseId: number | string, files: File[], description?: string) {
+  const formData = new FormData();
+  files.forEach(file => formData.append('files', file));
+  if (description) formData.append('description', description);
+
+  const res = await fetch(`${API_BASE}/evidence/${caseId}`, {
+    method: 'POST',
+    headers: getHeaders(), // Don't set Content-Type, let browser set multipart/form-data with boundary
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Failed to upload evidence');
+  return res.json();
+}
+
+export function getEvidenceFileUrl(evidenceId: number | string) {
+  return `${API_BASE}/evidence/file/${evidenceId}`;
+}
+
 export async function fetchChat(payload: any) {
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',

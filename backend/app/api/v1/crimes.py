@@ -14,7 +14,7 @@ from app.models import (
 from app.schemas.crime import (
     CrimeListResponse, PaginatedResponse, CrimeCategoriesResponse, CategoryItem, CrimePeopleResponse,
     PersonDetail, ChargesheetItem, ArrestItem, SectionItem, CaseStatusHistoryItem,
-    CrimeAnalyticsResponse, AnalyticsBucket,
+    CrimeAnalyticsResponse, AnalyticsBucket, CaseCreateRequest, CaseCreateResponse
 )
 from app.catalyst.cache import cache_service
 from app.catalyst.search import apply_free_text_filter
@@ -448,3 +448,48 @@ async def get_investigation_report_pdf(case_id: int, db: AsyncSession = Depends(
         "Content-Disposition": 'inline; filename="investigation_report.html"'
     }
     return HTMLResponse(content=html_content, headers=headers)
+
+
+from datetime import datetime
+@router.post("", response_model=CaseCreateResponse)
+async def create_crime(req: CaseCreateRequest, db: AsyncSession = Depends(get_db)):
+    """Create a new case (FIR)"""
+    new_case = CaseMaster(
+        CrimeNo=req.CrimeNo,
+        CaseNo=req.CaseNo,
+        CrimeRegisteredDate=req.CrimeRegisteredDate,
+        IncidentFromDate=req.IncidentFromDate,
+        IncidentToDate=req.IncidentToDate,
+        latitude=req.latitude,
+        longitude=req.longitude,
+        BriefFacts=req.BriefFacts,
+        CrimeMajorHeadID=req.CrimeMajorHeadID,
+        CrimeMinorHeadID=req.CrimeMinorHeadID,
+        CaseCategoryID=req.CaseCategoryID,
+        GravityOffenceID=req.GravityOffenceID,
+        PoliceStationID=req.PoliceStationID,
+        CaseStatusID=1, # Default to Under Investigation
+    )
+    db.add(new_case)
+    await db.flush()
+
+    for comp in req.complainants:
+        db.add(ComplainantDetails(CaseMasterID=new_case.CaseMasterID, ComplainantName=comp.name, AgeYear=comp.age))
+    
+    for vic in req.victims:
+        db.add(Victim(CaseMasterID=new_case.CaseMasterID, VictimName=vic.name, AgeYear=vic.age))
+
+    for acc in req.accused:
+        db.add(Accused(CaseMasterID=new_case.CaseMasterID, AccusedName=acc.name, AgeYear=acc.age))
+
+    # Add initial history
+    db.add(CaseStatusHistory(
+        CaseMasterID=new_case.CaseMasterID,
+        CaseStatusID=1,
+        ChangedDate=datetime.utcnow(),
+        Remarks="FIR Registered"
+    ))
+
+    await db.commit()
+    
+    return {"CaseMasterID": new_case.CaseMasterID, "CrimeNo": new_case.CrimeNo, "message": "Case registered successfully"}

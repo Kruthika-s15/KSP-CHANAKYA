@@ -1,6 +1,7 @@
-import { fetchCase, fetchCasePeople, fetchChargesheet, fetchArrests, fetchSections, fetchStatusHistory } from '@/lib/api';
+import { fetchCase, fetchCasePeople, fetchChargesheet, fetchArrests, fetchSections, fetchStatusHistory, fetchEvidence, getEvidenceFileUrl } from '@/lib/api';
+import UploadEvidenceButton from '@/components/UploadEvidenceButton';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Calendar, FileText, Users, ShieldAlert, Fingerprint, Gavel, Siren, History, ScrollText, FileOutput, Share2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, FileText, Users, ShieldAlert, Fingerprint, Gavel, Siren, History, ScrollText, FileOutput, Share2, File, Image as ImageIcon, Video, Music } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
 export default async function CaseDetailsPage({
@@ -19,11 +20,12 @@ export default async function CaseDetailsPage({
     complainants: [], victims: [], accused: []
   }));
 
-  const [chargesheet, arrests, sections, statusHistory] = await Promise.all([
+  const [chargesheet, arrests, sections, statusHistory, evidenceFiles] = await Promise.all([
     fetchChargesheet(case_id).catch(() => []),
     fetchArrests(case_id).catch(() => []),
     fetchSections(case_id).catch(() => []),
     fetchStatusHistory(case_id).catch(() => []),
+    fetchEvidence(case_id).catch(() => []),
   ]);
 
   const isClosed = caseData.CaseStatus?.toLowerCase().includes('closed');
@@ -172,6 +174,43 @@ export default async function CaseDetailsPage({
             </div>
           </div>
 
+          <div className="cmd-panel overflow-hidden border border-emerald-900/30">
+            <div className="p-4 border-b border-emerald-900/30 flex items-center font-semibold text-emerald-400 bg-emerald-950/10">
+              <File className="w-5 h-5 mr-2" />
+              Case Evidence
+            </div>
+            <div className="p-4">
+              {evidenceFiles.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {evidenceFiles.map((ev: any) => (
+                    <a
+                      key={ev.EvidenceID}
+                      href={getEvidenceFileUrl(ev.EvidenceID)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex flex-col bg-zinc-950 border border-zinc-800 hover:border-emerald-500/50 rounded-lg overflow-hidden transition-all"
+                    >
+                      <div className="h-24 bg-zinc-900 flex items-center justify-center border-b border-zinc-800 group-hover:bg-zinc-800 transition-colors">
+                        {ev.FileType === 'image' ? <ImageIcon className="w-8 h-8 text-zinc-500" /> :
+                         ev.FileType === 'pdf' ? <FileText className="w-8 h-8 text-zinc-500" /> :
+                         ev.FileType === 'video' ? <Video className="w-8 h-8 text-zinc-500" /> :
+                         ev.FileType === 'audio' ? <Music className="w-8 h-8 text-zinc-500" /> :
+                         <File className="w-8 h-8 text-zinc-500" />}
+                      </div>
+                      <div className="p-3">
+                        <div className="text-xs font-medium text-white truncate" title={ev.FileName}>{ev.FileName}</div>
+                        {ev.Description && <div className="text-xs text-zinc-500 line-clamp-2 mt-1">{ev.Description}</div>}
+                        <div className="text-[10px] text-zinc-600 mt-2">{new Date(ev.UploadedAt).toLocaleDateString()}</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-zinc-500 italic">No evidence submitted.</div>
+              )}
+            </div>
+          </div>
+
           <div className="cmd-panel overflow-hidden">
             <div className="p-4 border-b border-zinc-800 flex items-center font-semibold text-white">
               <Siren className="w-5 h-5 mr-2 text-red-500" />
@@ -284,6 +323,7 @@ export default async function CaseDetailsPage({
           <div className="cmd-panel p-4">
             <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Intelligence Actions</div>
             <div className="space-y-2">
+              <UploadEvidenceButton caseId={case_id} />
               <Link
                 href={`/crimes/${case_id}/report`}
                 className="w-full flex items-center justify-center space-x-2 py-2 bg-red-600 hover:bg-red-700 text-sm text-white rounded transition-colors"

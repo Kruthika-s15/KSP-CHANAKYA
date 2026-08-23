@@ -115,3 +115,33 @@ class CrimeAnalyticsResponse(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     buckets: List[AnalyticsBucket]
+
+
+class PersonInput(BaseModel):
+    name: str
+    age: Optional[int] = None
+
+
+class CaseCreateRequest(BaseModel):
+    CrimeNo: Optional[str] = None
+    CaseNo: Optional[str] = None
+    CrimeRegisteredDate: Optional[date] = None
+    IncidentFromDate: Optional[datetime] = None
+    IncidentToDate: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    BriefFacts: Optional[str] = None
+    CrimeMajorHeadID: Optional[int] = None
+    CrimeMinorHeadID: Optional[int] = None
+    CaseCategoryID: Optional[int] = None
+    GravityOffenceID: Optional[int] = None
+    PoliceStationID: Optional[int] = None
+    complainants: List[PersonInput] = []
+    victims: List[PersonInput] = []
+    accused: List[PersonInput] = []
+
+
+class CaseCreateResponse(BaseModel):
+    CaseMasterID: int
+    CrimeNo: Optional[str] = None
+    message: str = "Case registered successfully"

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logging import logger
-from app.api.v1 import health, crimes, chat, biometrics, personnel, catalyst, network, auth
+from app.api.v1 import health, crimes, chat, biometrics, personnel, catalyst, network, auth, evidence
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -45,6 +45,7 @@ app.include_router(catalyst.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/catalyst/auth")
 app.include_router(network.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
+app.include_router(evidence.router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":
     import uvicorn

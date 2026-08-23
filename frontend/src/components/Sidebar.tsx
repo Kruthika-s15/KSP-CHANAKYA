@@ -25,6 +25,7 @@ export default function Sidebar() {
       name: 'Crime Intelligence',
       icon: ShieldAlert,
       children: [
+        { name: 'Register New FIR', href: '/crimes/new' },
         { name: 'All Crimes / Search', href: '/crimes' },
         { name: 'Crime Trends', href: '/analytics' },
         { name: 'Crime Hotspots (Map)', href: '/crime-hotspots' }, // Map 3 (Heatmap)
