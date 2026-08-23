@@ -152,7 +152,8 @@ export default function FingerprintIdentifier() {
 
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/v1/biometrics/identify', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+      const res = await fetch(`${apiBase}/biometrics/identify`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: fd,

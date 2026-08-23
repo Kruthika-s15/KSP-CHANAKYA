@@ -80,7 +80,8 @@ export default function AIAssistant() {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
       const form  = new FormData();
       form.append('document', file);
-      const res = await fetch('http://127.0.0.1:8000/api/v1/biometrics/ocr', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+      const res = await fetch(`${apiBase}/biometrics/ocr`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,

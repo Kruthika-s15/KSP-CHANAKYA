@@ -58,7 +58,8 @@ export default function FaceMatchTab() {
       const form  = new FormData();
       form.append('probe', probeFile);
 
-      const res = await fetch('http://127.0.0.1:8000/api/v1/biometrics/face-match', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+      const res = await fetch(`${apiBase}/biometrics/face-match`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
