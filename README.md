@@ -15,6 +15,7 @@ KSP — Chanakya is a unified command center designed for the Karnataka State Po
 * 🕸️ **Crime Network Analysis:** Interactive visual graphs connecting `Cases` → `Accused` → `Victims` → `Officers` → `Biometrics`.
 * 🗺️ **Digital City Twin:** Geospatial maps featuring crime heatmaps, jurisdiction boundaries, hotspots, and patrol zones.
 * 📹 **Camera & Incident Intelligence:** Bridge surveillance footage directly with AI analysis and case data.
+* 📝 **Case & Evidence Management:** Register FIRs, edit case facts dynamically, and manage digital evidence (PDFs, Images, Audio, Video).
 * 📊 **Analytics & Reports:** Monitor crime patterns across districts and export AI-assisted PDF reports.
 * ⚡ **Catalyst Services Integration:** Built on a modular architecture for auth, search, storage, OCR, translation, and API security.
 
@@ -23,8 +24,31 @@ KSP — Chanakya is a unified command center designed for the Karnataka State Po
 ## ✦ Tech Stack
 
 * **Frontend:** Next.js · React · TypeScript · Tailwind CSS
-* **Backend:** Python · FastAPI · SQLAlchemy · PostgreSQL
+* **Backend:** Python · FastAPI · SQLAlchemy · PostgreSQL (Neon)
 * **AI & Platform:** Gemini AI · NLP (English/Kannada) · Zoho Catalyst Services · API Gateway
+
+---
+
+## ✦ Quick Start
+
+### 1. Backend Setup
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate   # Windows
+# source venv/bin/activate # Linux/Mac
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Visit `http://localhost:3000` to access the Chanakya Dashboard.
 
 ---
 
@@ -36,7 +60,6 @@ Crime Data ➔ AI + Biometrics + Maps ➔ Connected Relationships ➔ Actionable
 
 ✦ Why Chanakya?
 Most crime databases store information. Chanakya connects it.
-
 Cases. People. Places. Biometrics. Cameras. Patterns. All in one place.
 
 ---

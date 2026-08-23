@@ -140,14 +140,6 @@ class CaseCreateRequest(BaseModel):
     victims: List[PersonInput] = []
     accused: List[PersonInput] = []
 
-class CaseUpdateRequest(BaseModel):
-    BriefFacts: Optional[str] = None
-    CrimeMajorHeadID: Optional[int] = None
-    CrimeMinorHeadID: Optional[int] = None
-    CaseCategoryID: Optional[int] = None
-    GravityOffenceID: Optional[int] = None
-    CaseStatusID: Optional[int] = None
-
 
 class CreatedAccused(BaseModel):
     id: int
@@ -158,3 +150,13 @@ class CaseCreateResponse(BaseModel):
     CrimeNo: Optional[str] = None
     message: str = "Case registered successfully"
     accused: List[CreatedAccused] = []
+
+
+class CaseUpdateRequest(BaseModel):
+    BriefFacts: Optional[str] = None
+    CaseCategoryID: Optional[int] = None
+    CrimeMajorHeadID: Optional[int] = None
+    CrimeMinorHeadID: Optional[int] = None
+    GravityOffenceID: Optional[int] = None
+    PoliceStationID: Optional[int] = None
+    CaseStatusID: Optional[int] = None

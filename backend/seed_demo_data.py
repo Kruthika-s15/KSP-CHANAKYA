@@ -147,22 +147,12 @@ async def seed_data():
 
         ch_theft = CrimeHead(CrimeGroupName="DEMO_Theft", Active=True)
         ch_body = CrimeHead(CrimeGroupName="DEMO_Crimes Against Body", Active=True)
-        ch_cyber = CrimeHead(CrimeGroupName="DEMO_Cyber Crime", Active=True)
-        ch_fraud = CrimeHead(CrimeGroupName="DEMO_Financial Fraud", Active=True)
-        ch_prop = CrimeHead(CrimeGroupName="DEMO_Crimes Against Property", Active=True)
-        ch_narc = CrimeHead(CrimeGroupName="DEMO_Narcotics", Active=True)
-        session.add_all([ch_theft, ch_body, ch_cyber, ch_fraud, ch_prop, ch_narc])
+        session.add_all([ch_theft, ch_body])
         await session.flush()
 
         csh_veh = CrimeSubHead(CrimeHeadID=ch_theft.CrimeHeadID, CrimeHeadName="Vehicle Theft", SeqID=1)
         csh_mur = CrimeSubHead(CrimeHeadID=ch_body.CrimeHeadID, CrimeHeadName="Murder", SeqID=1)
-        csh_phish = CrimeSubHead(CrimeHeadID=ch_cyber.CrimeHeadID, CrimeHeadName="Phishing", SeqID=1)
-        csh_ident = CrimeSubHead(CrimeHeadID=ch_cyber.CrimeHeadID, CrimeHeadName="Identity Theft", SeqID=2)
-        csh_embez = CrimeSubHead(CrimeHeadID=ch_fraud.CrimeHeadID, CrimeHeadName="Embezzlement", SeqID=1)
-        csh_burg = CrimeSubHead(CrimeHeadID=ch_prop.CrimeHeadID, CrimeHeadName="Burglary", SeqID=1)
-        csh_vand = CrimeSubHead(CrimeHeadID=ch_prop.CrimeHeadID, CrimeHeadName="Vandalism", SeqID=2)
-        csh_drug = CrimeSubHead(CrimeHeadID=ch_narc.CrimeHeadID, CrimeHeadName="Drug Trafficking", SeqID=1)
-        session.add_all([csh_veh, csh_mur, csh_phish, csh_ident, csh_embez, csh_burg, csh_vand, csh_drug])
+        session.add_all([csh_veh, csh_mur])
         await session.flush()
 
         # Add CrimeHeadActSection
@@ -176,18 +166,11 @@ async def seed_data():
         base_date = datetime.utcnow() - timedelta(days=60)
         
         for i in range(1, 21):
-            crime_cats = [
-                (ch_theft, csh_veh, grav_non, random.choice(theft_facts)),
-                (ch_body, csh_mur, grav_hei, random.choice(murder_facts)),
-                (ch_cyber, random.choice([csh_phish, csh_ident]), grav_non, "Complainant reported unauthorized access to their bank account resulting in fraudulent transfers."),
-                (ch_fraud, csh_embez, grav_hei, "Investigation revealed systematic siphoning of company funds over a period of six months by a trusted employee."),
-                (ch_prop, random.choice([csh_burg, csh_vand]), grav_non, "Unknown miscreants broke into the warehouse and destroyed property, in addition to stealing valuable equipment."),
-                (ch_narc, csh_drug, grav_hei, "Acting on a tip-off, police intercepted a vehicle carrying illicit substances meant for distribution.")
-            ]
-            
-            ch, csh, grav, case_facts = random.choice(crime_cats)
-            
+            is_theft = (i % 2 == 0)
             unit = random.choice(units)
+            ch = ch_theft if is_theft else ch_body
+            csh = csh_veh if is_theft else csh_mur
+            grav = grav_non if is_theft else grav_hei
             status = status_clo if i % 5 == 0 else status_inv
             
             # Bangalore lat/lon roughly 12.97, 77.59 with slight variations
@@ -196,7 +179,7 @@ async def seed_data():
             
             cdate = base_date + timedelta(days=i*2)
 
-            cdate = base_date + timedelta(days=i*2)
+            case_facts = random.choice(theft_facts) if is_theft else random.choice(murder_facts)
 
             case = CaseMaster(
                 CrimeNo=f"1044300062026{i:05d}",
@@ -224,7 +207,7 @@ async def seed_data():
             assoc = ActSectionAssociation(
                 CaseMasterID=case.CaseMasterID,
                 ActID=act_ipc.ActCode,
-                SectionID=sec_302.SectionCode if grav == grav_hei else sec_379.SectionCode,
+                SectionID=sec_379.SectionCode if is_theft else sec_302.SectionCode,
                 ActOrderID=1,
                 SectionOrderID=1
             )
@@ -332,8 +315,8 @@ async def seed_data():
                 Remarks=f"Fingerprint captured at booking desk. Subject cooperated. Automated AFIS enrollment successful.",
             ))
 
-            # --- Evidence (Medical Report) for Murder/Body Cases ---
-            if ch == ch_body:
+            # --- Evidence (Medical Report) for Murder Cases ---
+            if not is_theft:
                 # A minimal valid PDF document byte string
                 dummy_pdf = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\nendobj\n4 0 obj\n<< /Length 53 >>\nstream\nBT\n/F1 24 Tf\n100 700 Td\n(Medical Examination Report) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000288 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n390\n%%EOF\n"
                 session.add(CaseEvidence(

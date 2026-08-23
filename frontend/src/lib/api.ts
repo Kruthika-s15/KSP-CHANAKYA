@@ -69,13 +69,22 @@ export async function createCase(payload: any) {
   return res.json();
 }
 
-export async function updateCase(id: number | string, payload: any) {
-  const res = await fetch(`${API_BASE}/crimes/${id}`, {
-    method: 'PUT',
+export async function updateCase(caseId: number | string, payload: any) {
+  const res = await fetch(`${API_BASE}/crimes/${caseId}`, {
+    method: 'PATCH',
     headers: getHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to update case');
+  return res.json();
+}
+
+export async function deleteEvidence(evidenceId: number | string) {
+  const res = await fetch(`${API_BASE}/evidence/${evidenceId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete evidence');
   return res.json();
 }
 

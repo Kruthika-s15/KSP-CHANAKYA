@@ -14,7 +14,7 @@ from app.models import (
 from app.schemas.crime import (
     CrimeListResponse, PaginatedResponse, CrimeCategoriesResponse, CategoryItem, CrimePeopleResponse,
     PersonDetail, ChargesheetItem, ArrestItem, SectionItem, CaseStatusHistoryItem,
-    CrimeAnalyticsResponse, AnalyticsBucket, CaseCreateRequest, CaseCreateResponse
+    CrimeAnalyticsResponse, AnalyticsBucket, CaseCreateRequest, CaseCreateResponse, CaseUpdateRequest
 )
 from app.catalyst.cache import cache_service
 from app.catalyst.search import apply_free_text_filter
@@ -504,43 +504,18 @@ async def create_crime(req: CaseCreateRequest, db: AsyncSession = Depends(get_db
         "accused": created_accused
     }
 
-@router.put("/{case_id}", response_model=dict)
+
+@router.patch("/{case_id}")
 async def update_crime(case_id: int, req: CaseUpdateRequest, db: AsyncSession = Depends(get_db)):
-    """Update details of an existing case"""
-    query = select(CaseMaster).filter(CaseMaster.CaseMasterID == case_id)
-    result = await db.execute(query)
-    case = result.scalar_one_or_none()
-    
+    """Update editable fields of an existing case."""
+    case = await db.scalar(select(CaseMaster).filter(CaseMaster.CaseMasterID == case_id))
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    status_changed = False
-    new_status = req.CaseStatusID
-    old_status = case.CaseStatusID
-
-    if req.BriefFacts is not None:
-        case.BriefFacts = req.BriefFacts
-    if req.CrimeMajorHeadID is not None:
-        case.CrimeMajorHeadID = req.CrimeMajorHeadID
-    if req.CrimeMinorHeadID is not None:
-        case.CrimeMinorHeadID = req.CrimeMinorHeadID
-    if req.CaseCategoryID is not None:
-        case.CaseCategoryID = req.CaseCategoryID
-    if req.GravityOffenceID is not None:
-        case.GravityOffenceID = req.GravityOffenceID
-    if req.CaseStatusID is not None and req.CaseStatusID != old_status:
-        case.CaseStatusID = req.CaseStatusID
-        status_changed = True
-
-    if status_changed:
-        db.add(CaseStatusHistory(
-            CaseMasterID=case.CaseMasterID,
-            CaseStatusID=new_status,
-            ChangedDate=datetime.utcnow(),
-            Remarks="Status updated via Edit form"
-        ))
+    update_data = req.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(case, field, value)
 
     await db.commit()
     cache_service.clear()
-    
-    return {"message": "Case updated successfully"}
+    return {"status": "updated", "CaseMasterID": case_id, "fields_updated": list(update_data.keys())}
