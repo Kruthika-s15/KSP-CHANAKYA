@@ -9,6 +9,8 @@ interface PersonEntry {
   name: string;
   age: string;
   fingerprintFile?: globalThis.File | null;
+  unknownCount?: string;
+  ageRange?: string;
 }
 
 export default function NewCasePage() {
@@ -84,7 +86,14 @@ export default function NewCasePage() {
         PoliceStationID: parseInt(formData.PoliceStationID) || null,
         complainants: complainants.filter(c => c.name.trim()).map(c => ({ name: c.name, age: parseInt(c.age) || null })),
         victims: victims.filter(v => v.name.trim()).map(v => ({ name: v.name, age: parseInt(v.age) || null })),
-        accused: accused.filter(a => a.name.trim()).map(a => ({ name: a.name, age: parseInt(a.age) || null })),
+        accused: accused.filter(a => a.name.trim()).map(a => {
+          if (a.name.toLowerCase() === "unknown") {
+            const countStr = a.unknownCount ? ` (${a.unknownCount} persons)` : "";
+            const ageRangeStr = a.ageRange ? ` [Age: ${a.ageRange}]` : "";
+            return { name: `Unknown${countStr}${ageRangeStr}`, age: null };
+          }
+          return { name: a.name, age: parseInt(a.age) || null };
+        }),
       };
 
       // 1. Create the Case
@@ -271,10 +280,18 @@ export default function NewCasePage() {
               <div key={i} className="mb-4 p-3 bg-red-950/10 border border-red-900/20 rounded-lg">
                 <div className="flex gap-3 items-center mb-2">
                   <span className="text-xs text-red-800 w-6 text-center font-bold">{i + 1}.</span>
-                  <input placeholder="Full Name" className="flex-1 bg-zinc-900 border border-red-900/40 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={a.name} onChange={e => handleArrayChange(setAccused, i, "name", e.target.value)} />
-                  <input placeholder="Age" type="number" className="w-20 bg-zinc-900 border border-red-900/40 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={a.age} onChange={e => handleArrayChange(setAccused, i, "age", e.target.value)} />
+                  <input placeholder="Full Name (type 'Unknown' for group)" className="flex-1 bg-zinc-900 border border-red-900/40 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={a.name} onChange={e => handleArrayChange(setAccused, i, "name", e.target.value)} />
+                  {a.name.toLowerCase() !== "unknown" && (
+                    <input placeholder="Age" type="number" className="w-20 bg-zinc-900 border border-red-900/40 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={a.age} onChange={e => handleArrayChange(setAccused, i, "age", e.target.value)} />
+                  )}
                   <button type="button" onClick={() => removePerson(setAccused, i)} className="text-zinc-600 hover:text-red-500 p-1 transition"><Trash2 className="w-4 h-4" /></button>
                 </div>
+                {a.name.toLowerCase() === "unknown" && (
+                  <div className="ml-9 flex items-center gap-3 mb-2">
+                    <input placeholder="Number of people (e.g. 3)" type="number" className="w-48 bg-zinc-900 border border-red-900/40 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={a.unknownCount || ""} onChange={e => handleArrayChange(setAccused, i, "unknownCount", e.target.value)} />
+                    <input placeholder="Age Range (e.g. 20-30)" className="w-48 bg-zinc-900 border border-red-900/40 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={a.ageRange || ""} onChange={e => handleArrayChange(setAccused, i, "ageRange", e.target.value)} />
+                  </div>
+                )}
                 {/* Fingerprint Upload */}
                 <div className="ml-9 flex items-center gap-3">
                   <input
