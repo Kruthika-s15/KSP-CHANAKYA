@@ -223,13 +223,25 @@ async def seed_data():
                 GenderID=1,
                 VictimPolice="0"
             )
-            acc_name = accused_names[i % len(accused_names)]
+            # To create rich connections in the network graph, we make some people repeat offenders.
+            # "Anand Spider Kulkarni" (index 0) is a mastermind involved in every 5th case.
+            # "John Doe" (index 5) is involved in every 7th case.
+            if i % 5 == 0:
+                acc_index = 0
+            elif i % 7 == 0:
+                acc_index = 5
+            else:
+                acc_index = i % len(accused_names)
+
+            acc_name = accused_names[acc_index]
+            person_id = f"P-{(acc_index + 1):03d}"
+
             acc = Accused(
                 CaseMasterID=case.CaseMasterID,
                 AccusedName=acc_name,
-                AgeYear=35 + (i % 10),
+                AgeYear=35 + (acc_index % 10),
                 GenderID=1,
-                PersonID=f"A{i}"
+                PersonID=person_id
             )
             session.add_all([comp, vic, acc])
             await session.flush()
@@ -284,14 +296,8 @@ async def seed_data():
                 ))
 
             # --- Biometric record for the accused (fingerprint capture) ---
-            # Case #3's accused and case #13's accused deliberately SHARE the
-            # same BiometricRefID, simulating the same real person showing up
-            # under two different case files (a repeat offender) — this is
-            # what /biometrics/search is meant to catch.
-            if i in (3, 13):
-                ref_id = "FP-SHARED-003"
-            else:
-                ref_id = f"FP-{i:05d}"
+            # Shared ref_id allows the biometric system and network graph to link identities.
+            ref_id = f"FP-{(acc_index + 1):03d}"
 
             session.add(BiometricRecord(
                 AccusedMasterID=acc.AccusedMasterID,
