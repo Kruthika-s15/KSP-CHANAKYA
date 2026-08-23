@@ -55,23 +55,75 @@ def _row_to_hit(row) -> BiometricMatchHit:
     )
 
 
+import time
+import shutil
+from datetime import datetime
+
 @router.post("", response_model=BiometricRecordResponse)
 async def register_biometric(
     payload: BiometricRecordCreate,
     db: AsyncSession = Depends(get_db),
     investigator: dict = Depends(get_current_investigator)
 ):
-    """Register a biometric capture (fingerprint/iris/photo) for an accused person."""
+    """Register a new biometric reference manually (metadata only)."""
     accused = await db.scalar(select(Accused).filter(Accused.AccusedMasterID == payload.AccusedMasterID))
     if not accused:
         raise HTTPException(status_code=404, detail="Accused person not found")
 
-    record = BiometricRecord(**payload.model_dump())
-    db.add(record)
+    new_record = BiometricRecord(
+        AccusedMasterID=payload.AccusedMasterID,
+        BiometricType=payload.BiometricType,
+        BiometricRefID=payload.BiometricRefID,
+        CapturedDate=payload.CapturedDate,
+        CapturedByID=investigator["id"],
+        Remarks=payload.Remarks
+    )
+    db.add(new_record)
     await db.commit()
-    await db.refresh(record)
-    return BiometricRecordResponse.model_validate(record)
+    await db.refresh(new_record)
+    return BiometricRecordResponse.model_validate(new_record)
 
+@router.post("/upload/{accused_id}", response_model=BiometricRecordResponse)
+async def upload_biometric_file(
+    accused_id: int,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upload a fingerprint file for an accused and register it."""
+    accused = await db.scalar(select(Accused).filter(Accused.AccusedMasterID == accused_id))
+    if not accused:
+        raise HTTPException(status_code=404, detail="Accused person not found")
+        
+    ref_id = f"FP-{int(time.time())}-{accused_id}"
+    
+    # Save physical file to dataset/
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    dataset_dir = os.path.join(base_dir, "dataset")
+    os.makedirs(dataset_dir, exist_ok=True)
+    
+    # Save as .BMP so fingerprint scan glob matches it
+    file_ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".bmp"
+    if file_ext != ".bmp":
+        file_ext = ".BMP"
+        
+    file_path = os.path.join(dataset_dir, f"{ref_id}{file_ext}")
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    new_record = BiometricRecord(
+        AccusedMasterID=accused_id,
+        BiometricType="FINGERPRINT",
+        BiometricRefID=ref_id,
+        CapturedDate=datetime.utcnow().date(),
+        CapturedByID=1,
+        Remarks="Uploaded during FIR registration."
+    )
+    db.add(new_record)
+    await db.commit()
+    await db.refresh(new_record)
+    
+    return BiometricRecordResponse.model_validate(new_record)
 
 @router.get("/search", response_model=BiometricSearchResponse)
 async def search_by_biometric(

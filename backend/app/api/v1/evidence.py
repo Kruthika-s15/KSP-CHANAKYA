@@ -3,7 +3,7 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.db.session import get_db
 from app.models import CaseEvidence, CaseMaster
@@ -48,7 +48,7 @@ async def upload_evidence(
             FileData=data,
             MimeType=mime,
             Description=description,
-            UploadedAt=datetime.now(timezone.utc),
+            UploadedAt=datetime.utcnow(),
         )
         db.add(evidence)
         await db.flush()

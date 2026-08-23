@@ -479,8 +479,12 @@ async def create_crime(req: CaseCreateRequest, db: AsyncSession = Depends(get_db
     for vic in req.victims:
         db.add(Victim(CaseMasterID=new_case.CaseMasterID, VictimName=vic.name, AgeYear=vic.age))
 
+    created_accused = []
     for acc in req.accused:
-        db.add(Accused(CaseMasterID=new_case.CaseMasterID, AccusedName=acc.name, AgeYear=acc.age))
+        new_accused = Accused(CaseMasterID=new_case.CaseMasterID, AccusedName=acc.name, AgeYear=acc.age)
+        db.add(new_accused)
+        await db.flush()
+        created_accused.append({"id": new_accused.AccusedMasterID, "name": new_accused.AccusedName})
 
     # Add initial history
     db.add(CaseStatusHistory(
@@ -491,5 +495,11 @@ async def create_crime(req: CaseCreateRequest, db: AsyncSession = Depends(get_db
     ))
 
     await db.commit()
+    cache_service.clear()
     
-    return {"CaseMasterID": new_case.CaseMasterID, "CrimeNo": new_case.CrimeNo, "message": "Case registered successfully"}
+    return {
+        "CaseMasterID": new_case.CaseMasterID,
+        "CrimeNo": new_case.CrimeNo,
+        "message": "Case registered successfully",
+        "accused": created_accused
+    }

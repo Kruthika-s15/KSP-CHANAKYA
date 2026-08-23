@@ -93,6 +93,18 @@ export function getEvidenceFileUrl(evidenceId: number | string) {
   return `${API_BASE}/evidence/file/${evidenceId}`;
 }
 
+export async function uploadBiometricFile(accusedId: number | string, file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/biometrics/upload/${accusedId}`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Failed to upload fingerprint');
+  return res.json();
+}
+
 export async function fetchChat(payload: any) {
   const res = await fetch(`${API_BASE}/chat`, {
     method: 'POST',

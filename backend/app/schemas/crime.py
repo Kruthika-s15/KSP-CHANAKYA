@@ -141,7 +141,12 @@ class CaseCreateRequest(BaseModel):
     accused: List[PersonInput] = []
 
 
+class CreatedAccused(BaseModel):
+    id: int
+    name: str
+
 class CaseCreateResponse(BaseModel):
     CaseMasterID: int
     CrimeNo: Optional[str] = None
     message: str = "Case registered successfully"
+    accused: List[CreatedAccused] = []
