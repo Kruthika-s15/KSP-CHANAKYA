@@ -7,7 +7,7 @@ export default async function DashboardHome() {
   let totalCases = 0;
   
   try {
-    const data = await fetchCrimes({ page: 1, page_size: 100 });
+    const data = await fetchCrimes({ page: 1, page_size: 100 }).catch(() => ({ items: [], total: 0 }));
     items = data.items || [];
     totalCases = data.total || 0;
   } catch (error) {

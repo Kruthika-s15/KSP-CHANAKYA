@@ -1,10 +1,10 @@
-import cv2
-import numpy as np
 import base64
 
 class FingerprintService:
     @staticmethod
     def match_fingerprints(sample_bytes: bytes, target_bytes: bytes):
+        import cv2
+        import numpy as np
         # 1. Decode image bytes to OpenCV grayscale arrays
         nparr1 = np.frombuffer(sample_bytes, np.uint8)
         nparr2 = np.frombuffer(target_bytes, np.uint8)

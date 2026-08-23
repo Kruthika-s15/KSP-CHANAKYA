@@ -56,7 +56,6 @@ export default function OverviewRadarMap() {
         zoom: 11.5,
         pitch: 45,
         bearing: -15,
-        antialias: true,
         interactive: true,
       });
 

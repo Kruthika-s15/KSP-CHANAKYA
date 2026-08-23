@@ -18,7 +18,7 @@ export default function CityTwinPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchCrimes({ page: 1, page_size: 200 })
+    fetchCrimes({ page: 1, page_size: 100 })
       .then((data) => {
         if (data.items && data.items.length > 0) {
           setCases(data.items);

@@ -162,6 +162,7 @@ export default function CityTwinMap({ cases }: { cases: GeoCase[] }) {
       zoom: 13.5,
       pitch: 50,
       bearing: -20,
+      // @ts-ignore - antialias is supported by WebGL context but missing in types
       antialias: true,
     });
     mapRef.current = map;

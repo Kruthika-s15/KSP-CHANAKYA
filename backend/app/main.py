@@ -45,3 +45,10 @@ app.include_router(catalyst.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/catalyst/auth")
 app.include_router(network.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port_str = os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT")
+    port = int(port_str) if port_str else 8000
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
