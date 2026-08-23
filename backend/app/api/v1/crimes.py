@@ -503,3 +503,44 @@ async def create_crime(req: CaseCreateRequest, db: AsyncSession = Depends(get_db
         "message": "Case registered successfully",
         "accused": created_accused
     }
+
+@router.put("/{case_id}", response_model=dict)
+async def update_crime(case_id: int, req: CaseUpdateRequest, db: AsyncSession = Depends(get_db)):
+    """Update details of an existing case"""
+    query = select(CaseMaster).filter(CaseMaster.CaseMasterID == case_id)
+    result = await db.execute(query)
+    case = result.scalar_one_or_none()
+    
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    status_changed = False
+    new_status = req.CaseStatusID
+    old_status = case.CaseStatusID
+
+    if req.BriefFacts is not None:
+        case.BriefFacts = req.BriefFacts
+    if req.CrimeMajorHeadID is not None:
+        case.CrimeMajorHeadID = req.CrimeMajorHeadID
+    if req.CrimeMinorHeadID is not None:
+        case.CrimeMinorHeadID = req.CrimeMinorHeadID
+    if req.CaseCategoryID is not None:
+        case.CaseCategoryID = req.CaseCategoryID
+    if req.GravityOffenceID is not None:
+        case.GravityOffenceID = req.GravityOffenceID
+    if req.CaseStatusID is not None and req.CaseStatusID != old_status:
+        case.CaseStatusID = req.CaseStatusID
+        status_changed = True
+
+    if status_changed:
+        db.add(CaseStatusHistory(
+            CaseMasterID=case.CaseMasterID,
+            CaseStatusID=new_status,
+            ChangedDate=datetime.utcnow(),
+            Remarks="Status updated via Edit form"
+        ))
+
+    await db.commit()
+    cache_service.clear()
+    
+    return {"message": "Case updated successfully"}

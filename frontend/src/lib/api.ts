@@ -69,6 +69,16 @@ export async function createCase(payload: any) {
   return res.json();
 }
 
+export async function updateCase(id: number | string, payload: any) {
+  const res = await fetch(`${API_BASE}/crimes/${id}`, {
+    method: 'PUT',
+    headers: getHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to update case');
+  return res.json();
+}
+
 export async function fetchEvidence(caseId: number | string) {
   const res = await fetch(`${API_BASE}/evidence/${caseId}`, { cache: 'no-store', headers: getHeaders() });
   if (!res.ok) return [];

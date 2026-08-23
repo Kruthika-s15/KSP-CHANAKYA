@@ -140,6 +140,14 @@ class CaseCreateRequest(BaseModel):
     victims: List[PersonInput] = []
     accused: List[PersonInput] = []
 
+class CaseUpdateRequest(BaseModel):
+    BriefFacts: Optional[str] = None
+    CrimeMajorHeadID: Optional[int] = None
+    CrimeMinorHeadID: Optional[int] = None
+    CaseCategoryID: Optional[int] = None
+    GravityOffenceID: Optional[int] = None
+    CaseStatusID: Optional[int] = None
+
 
 class CreatedAccused(BaseModel):
     id: int
