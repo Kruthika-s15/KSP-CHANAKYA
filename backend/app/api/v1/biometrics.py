@@ -182,9 +182,9 @@ async def identify_fingerprint(
     investigator: dict = Depends(get_current_investigator)
 ):
     """
-    Identifies a fingerprint by comparing it against ALL .BMP images
-    in the backend/dataset/ folder.  The folder is the single source of
-    truth — if a file exists there, it is compared.
+    Identifies a fingerprint by comparing it against dataset images.
+    In this demo, since real file paths aren't in the DB, we deterministically
+    map the available .BMP files in the dataset folder to the DB records.
     """
     import glob
 
@@ -192,24 +192,29 @@ async def identify_fingerprint(
     if not sample_bytes:
         raise HTTPException(status_code=400, detail="Sample image is required.")
 
-    # Locate the dataset folder (backend/dataset/)
+    # 1. Fetch all biometric records of type FINGERPRINT from the DB
+    query = select(BiometricRecord).filter(BiometricRecord.BiometricType == "FINGERPRINT")
+    result = await db.execute(query)
+    records = result.scalars().all()
+
+    if not records:
+        return {"status": "NO MATCH", "match_score": 0, "message": "No records in DB"}
+
+    # 2. Get all available .BMP files in the dataset folder
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     dataset_dir = os.path.join(base_dir, "dataset")
-
-    # Collect every .BMP file in the dataset folder
-    bmp_files = glob.glob(os.path.join(dataset_dir, "*.BMP"))
+    bmp_files = sorted(glob.glob(os.path.join(dataset_dir, "*.BMP")))
+    
     if not bmp_files:
-        return {
-            "status": "NO MATCH",
-            "match_score": 0,
-            "message": "No fingerprint records found in the dataset folder.",
-        }
+        return {"status": "NO MATCH", "match_score": 0, "message": "No image files found in dataset folder"}
 
     max_score = 0.0
-    best_file = None
+    best_match_id = None
     best_visualization = None
 
-    for filepath in bmp_files:
+    # 3. Compare by mapping each DB record to a physical file (looping if necessary)
+    for i, record in enumerate(records):
+        filepath = bmp_files[i % len(bmp_files)]
         try:
             with open(filepath, "rb") as f:
                 target_bytes = f.read()
@@ -218,40 +223,24 @@ async def identify_fingerprint(
             score = match_result["match_score"]
             if score > max_score:
                 max_score = score
-                best_file = filepath
+                best_match_id = record.BiometricID
                 best_visualization = match_result["visualization"]
         except Exception:
             continue
 
-    if max_score > 12.0 and best_file is not None:
-        # Derive the accused name from the filename (e.g. "Anand Spider Kulkarni.BMP" -> "Anand Spider Kulkarni")
-        accused_name = os.path.splitext(os.path.basename(best_file))[0]
-
-        # Try to look up the accused in the DB for full case details
-        accused_row = await db.execute(
-            select(Accused).filter(Accused.AccusedName == accused_name)
-        )
-        accused = accused_row.scalars().first()
-
-        suspect_info = {"AccusedName": accused_name}
-        if accused:
-            # Pull linked case details
-            hit_query = (
-                _match_query()
-                .filter(BiometricRecord.AccusedMasterID == accused.AccusedMasterID)
-                .limit(1)
-            )
-            hit_result = await db.execute(hit_query)
-            row = hit_result.first()
-            if row:
-                suspect_info = _row_to_hit(row).model_dump()
-
-        return {
-            "status": "MATCH",
-            "match_score": max_score,
-            "visualization": best_visualization,
-            "suspect": suspect_info,
-        }
+    # 4. Return the matched database profile
+    if max_score > 12.0 and best_match_id is not None:
+        hit_query = _match_query().filter(BiometricRecord.BiometricID == best_match_id)
+        hit_result = await db.execute(hit_query)
+        row = hit_result.first()
+        if row:
+            hit = _row_to_hit(row)
+            return {
+                "status": "MATCH",
+                "match_score": max_score,
+                "visualization": best_visualization,
+                "suspect": hit.model_dump()
+            }
 
     return {
         "status": "NO MATCH",
