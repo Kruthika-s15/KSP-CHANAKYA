@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, text
 
 from app.core.config import settings
+from app.db.base import Base
 from app.models import (
     State, District, Court, UnitType, Unit, CasteMaster, ReligionMaster, OccupationMaster,
     CaseStatusMaster, CaseCategory, GravityOffence, Rank, Designation, Employee,
@@ -24,12 +25,57 @@ async def check_if_seeded(session: AsyncSession) -> bool:
     return result.first() is not None
 
 async def seed_data():
+    is_seeded = False
     async with AsyncSessionLocal() as session:
-        if await check_if_seeded(session):
-            print("Database is already seeded! Skipping to avoid duplicates.")
-            return
+        is_seeded = await check_if_seeded(session)
+        
+    async with engine.begin() as conn:
+        if is_seeded:
+            print("Dropping existing tables...")
+        await conn.run_sync(Base.metadata.drop_all)
+        print("Creating tables...")
+        await conn.run_sync(Base.metadata.create_all)
 
-        print("Starting data seed...")
+    print("Tables created. Beginning data seeding...")
+
+    async with AsyncSessionLocal() as session:
+        # --- Predefined Realistic Data ---
+        accused_names = [
+            "Anand Spider Kulkarni", "Basavaraj Pandav Hegde", "Chetan Speed Deshpande",
+            "Dinesh Tiger Rai", "Guru Don Badiger", "John Doe", "Lokesh Kabali Swamy",
+            "Mahesh Daba Patil", "Manjunath Local Bhat", "Nagaraj Snake Poojary",
+            "Prakash Gooli Biradar", "Ramesh Kolar Shetty", "Santosh Bullet Nayak",
+            "Shankar Gowda", "Sunil Blackie Kambali", "Suresh Phantom Reddy",
+            "Venkatesh Metro Murthy", "Vinay Shadow Kumar"
+        ]
+        
+        complainant_names = [
+            "Ramesh Kumar", "Suresh Gowda", "Manjula Shetty", "Venkat Rao", 
+            "Priya Desai", "Lakshmi N", "Anil Kumar", "Karthik Raj", 
+            "Meena Patil", "Radha Menon"
+        ]
+        
+        victim_names = [
+            "Deepak Sharma", "Sunita Verma", "Ravi Shankar", "Gita Iyer", 
+            "Naveen Babu", "Rakesh Singh", "Geeta Bhat", "Prasad Reddy", 
+            "Shiva Kumar", "Pooja Hegde"
+        ]
+
+        theft_facts = [
+            "Complainant reported that their two-wheeler, a Honda Activa bearing registration KA-01-EH-1234, was stolen from the parking lot of Orion Mall between 14:00 and 16:00 hrs. CCTV footage shows an unidentified male suspect tampering with the ignition.",
+            "A Bajaj Pulsar motorcycle was stolen from outside the complainant's residence on 4th Main Road, Jayanagar during the night. The vehicle handle lock was broken. Neighbors reported seeing two men loitering near the house at 2:00 AM.",
+            "Complainant parked their Maruti Swift car near Commercial Street for shopping. Upon returning after 2 hours, the vehicle was missing. Broken glass pieces were found at the parking spot indicating forced entry.",
+            "A commercial goods vehicle loaded with electronic appliances was hijacked on the Hosur Highway near Electronic City. Three men in an SUV intercepted the truck and forced the driver out at knifepoint before driving away with the cargo.",
+            "Complainant's Royal Enfield Classic 350 was lifted from the basement parking of their apartment complex in Indiranagar. The security guard was on a break. The theft was discovered the next morning when the complainant was leaving for work."
+        ]
+
+        murder_facts = [
+            "A violent altercation occurred at a local bar in Koramangala, resulting in the fatal stabbing of the victim. Eyewitnesses state the dispute began over a financial disagreement. The suspect fled the scene in an auto-rickshaw.",
+            "Victim was found deceased in their apartment in Whitefield with blunt force trauma to the head. There were signs of forced entry and the house was ransacked, suggesting a burglary gone wrong. A blood-stained crowbar was recovered nearby.",
+            "Body of an unidentified male, approximately 35 years old, was discovered in an empty plot near Yelahanka. The victim had sustained multiple gunshot wounds. Police suspect gang rivalry as the primary motive.",
+            "A heated domestic dispute escalated, leading to the murder of the victim by their spouse. Neighbors heard shouting and called the police, but the victim had succumbed to injuries by the time authorities arrived. The weapon was a kitchen knife.",
+            "Victim was ambushed while returning home from work in JP Nagar. Three masked individuals attacked the victim with machetes. Investigation points towards an ongoing property dispute between the victim and their extended family."
+        ]
 
         # 1. Master Data
         state_ka = State(StateName="DEMO_Karnataka", NationalityID=1, Active=True)
@@ -126,6 +172,8 @@ async def seed_data():
             
             cdate = base_date + timedelta(days=i*2)
 
+            case_facts = random.choice(theft_facts) if is_theft else random.choice(murder_facts)
+
             case = CaseMaster(
                 CrimeNo=f"1044300062026{i:05d}",
                 CaseNo=f"2026{i:05d}",
@@ -135,7 +183,7 @@ async def seed_data():
                 InfoReceivedPSDate=cdate,
                 latitude=lat,
                 longitude=lon,
-                BriefFacts=f"DEMO_Synthetic Case description {i} for {'Vehicle Theft' if is_theft else 'Murder'}",
+                BriefFacts=case_facts,
                 PolicePersonID=emp.EmployeeID,
                 PoliceStationID=unit.UnitID,
                 CaseCategoryID=cat_fir.CaseCategoryID,
@@ -161,7 +209,7 @@ async def seed_data():
             # People
             comp = ComplainantDetails(
                 CaseMasterID=case.CaseMasterID,
-                ComplainantName=f"DEMO_Complainant_{i}",
+                ComplainantName=random.choice(complainant_names),
                 AgeYear=30 + (i % 10),
                 OccupationID=occ.OccupationID,
                 ReligionID=religion.ReligionID,
@@ -170,14 +218,15 @@ async def seed_data():
             )
             vic = Victim(
                 CaseMasterID=case.CaseMasterID,
-                VictimName=f"DEMO_Victim_{i}",
+                VictimName=random.choice(victim_names),
                 AgeYear=25 + (i % 10),
                 GenderID=1,
                 VictimPolice="0"
             )
+            acc_name = accused_names[i % len(accused_names)]
             acc = Accused(
                 CaseMasterID=case.CaseMasterID,
-                AccusedName=f"DEMO_Accused_{i}",
+                AccusedName=acc_name,
                 AgeYear=35 + (i % 10),
                 GenderID=1,
                 PersonID=f"A{i}"
@@ -191,7 +240,7 @@ async def seed_data():
                 CaseStatusID=status_inv.CaseStatusID,
                 ChangedDate=cdate,
                 ChangedByID=emp.EmployeeID,
-                Remarks="DEMO_Case registered and taken up for investigation",
+                Remarks="FIR registered. Case assigned to Investigating Officer. Initial spot inspection completed.",
             ))
             if status.CaseStatusID == status_clo.CaseStatusID:
                 session.add(CaseStatusHistory(
@@ -199,7 +248,7 @@ async def seed_data():
                     CaseStatusID=status_clo.CaseStatusID,
                     ChangedDate=cdate + timedelta(days=30),
                     ChangedByID=emp.EmployeeID,
-                    Remarks="DEMO_Case closed after investigation",
+                    Remarks="Investigation concluded. Sufficient evidence gathered. Final chargesheet prepared and submitted to court.",
                 ))
 
             # --- Chargesheet: filed for every closed case ---
@@ -250,7 +299,7 @@ async def seed_data():
                 BiometricRefID=ref_id,
                 CapturedDate=cdate.date(),
                 CapturedByID=emp.EmployeeID,
-                Remarks=f"DEMO_Fingerprint captured at booking for case {i}",
+                Remarks=f"Fingerprint captured at booking desk. Subject cooperated. Automated AFIS enrollment successful.",
             ))
 
         await session.commit()
