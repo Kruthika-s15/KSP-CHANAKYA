@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FileText, Edit2, X, Save } from 'lucide-react';
-import { fetchCrimeCategories, updateCase } from '@/lib/api';
+import { fetchCategories, updateCase } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function IncidentDetailsPanel({ caseData }: { caseData: any }) {
@@ -23,7 +23,7 @@ export default function IncidentDetailsPanel({ caseData }: { caseData: any }) {
 
   useEffect(() => {
     if (isEditing && categories.crime_heads.length === 0) {
-      fetchCrimeCategories().then(setCategories).catch(console.error);
+      fetchCategories().then(setCategories).catch(console.error);
     }
   }, [isEditing]);
 
