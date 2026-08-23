@@ -173,11 +173,11 @@ export default function NewCasePage() {
             </div>
             <div>
               <label className="block text-xs font-data text-zinc-500 mb-1">Incident From Date</label>
-              <input type="datetime-local" className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={formData.IncidentFromDate} onChange={e => setFormData({ ...formData, IncidentFromDate: e.target.value })} />
+              <input type="date" className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={formData.IncidentFromDate} onChange={e => setFormData({ ...formData, IncidentFromDate: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-data text-zinc-500 mb-1">Incident To Date</label>
-              <input type="datetime-local" className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={formData.IncidentToDate} onChange={e => setFormData({ ...formData, IncidentToDate: e.target.value })} />
+              <input type="date" className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-white focus:border-red-500/50 outline-none transition" value={formData.IncidentToDate} onChange={e => setFormData({ ...formData, IncidentToDate: e.target.value })} />
             </div>
             <div className="col-span-2">
               <label className="block text-xs font-data text-zinc-500 mb-1">Brief Facts (FIR Summary) *</label>
