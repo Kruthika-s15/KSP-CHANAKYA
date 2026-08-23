@@ -1,6 +1,6 @@
 import { fetchCase, fetchCasePeople, fetchChargesheet, fetchArrests, fetchSections, fetchStatusHistory, fetchEvidence, getEvidenceFileUrl } from '@/lib/api';
 import UploadEvidenceButton from '@/components/UploadEvidenceButton';
-import EditableBriefFacts from '@/components/EditableBriefFacts';
+import EditableIncidentDetails from '@/components/EditableIncidentDetails';
 import EvidenceSection from '@/components/EvidenceSection';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Calendar, FileText, Users, ShieldAlert, Fingerprint, Gavel, Siren, History, ScrollText, FileOutput, Share2, File, Image as ImageIcon, Video, Music } from 'lucide-react';
@@ -54,34 +54,7 @@ export default async function CaseDetailsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Details */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="cmd-panel overflow-hidden">
-            <div className="p-4 border-b border-zinc-800 flex items-center font-semibold text-white">
-              <FileText className="w-5 h-5 mr-2 text-red-500" />
-              Incident Details
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Crime Category</div>
-                  <div className="text-sm font-medium text-white">{caseData.CaseCategory || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Crime Head</div>
-                  <div className="text-sm font-medium text-white">{caseData.CrimeHead || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Crime Sub-Head</div>
-                  <div className="text-sm font-medium text-zinc-300">{caseData.CrimeSubHead || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Gravity</div>
-                  <div className="text-sm font-medium text-zinc-300">{caseData.Gravity || 'N/A'}</div>
-                </div>
-              </div>
-
-              <EditableBriefFacts caseId={case_id} initialFacts={caseData.BriefFacts || ''} />
-            </div>
-          </div>
+          <EditableIncidentDetails caseId={case_id} caseData={caseData} />
 
           <div className="cmd-panel overflow-hidden">
             <div className="p-4 border-b border-zinc-800 flex items-center font-semibold text-white">
