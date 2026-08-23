@@ -98,8 +98,14 @@ async def seed_data():
 
         unit_1 = Unit(UnitName="DEMO_Indiranagar PS", TypeID=ut_ps.UnitTypeID, StateID=state_ka.StateID, DistrictID=dist_blr.DistrictID, Active=True, ParentUnit=0, NationalityID=1)
         unit_2 = Unit(UnitName="DEMO_Koramangala PS", TypeID=ut_ps.UnitTypeID, StateID=state_ka.StateID, DistrictID=dist_blr.DistrictID, Active=True, ParentUnit=0, NationalityID=1)
-        session.add_all([unit_1, unit_2])
+        unit_3 = Unit(UnitName="DEMO_Electronic City PS", TypeID=ut_ps.UnitTypeID, StateID=state_ka.StateID, DistrictID=dist_blr.DistrictID, Active=True, ParentUnit=0, NationalityID=1)
+        unit_4 = Unit(UnitName="DEMO_Whitefield PS", TypeID=ut_ps.UnitTypeID, StateID=state_ka.StateID, DistrictID=dist_blr.DistrictID, Active=True, ParentUnit=0, NationalityID=1)
+        unit_5 = Unit(UnitName="DEMO_Jayanagar PS", TypeID=ut_ps.UnitTypeID, StateID=state_ka.StateID, DistrictID=dist_blr.DistrictID, Active=True, ParentUnit=0, NationalityID=1)
+        unit_6 = Unit(UnitName="DEMO_HSR Layout PS", TypeID=ut_ps.UnitTypeID, StateID=state_ka.StateID, DistrictID=dist_blr.DistrictID, Active=True, ParentUnit=0, NationalityID=1)
+        
+        session.add_all([unit_1, unit_2, unit_3, unit_4, unit_5, unit_6])
         await session.flush()
+        units = [unit_1, unit_2, unit_3, unit_4, unit_5, unit_6]
 
         # Lookups
         caste = CasteMaster(caste_master_name="DEMO_General")
@@ -161,7 +167,7 @@ async def seed_data():
         
         for i in range(1, 21):
             is_theft = (i % 2 == 0)
-            unit = unit_1 if i <= 10 else unit_2
+            unit = random.choice(units)
             ch = ch_theft if is_theft else ch_body
             csh = csh_veh if is_theft else csh_mur
             grav = grav_non if is_theft else grav_hei
