@@ -78,7 +78,7 @@ export default function EvidenceSection({
                       <div className="text-xs text-zinc-500 line-clamp-2 mt-1">{ev.Description}</div>
                     )}
                     <div className="text-[10px] text-zinc-600 mt-2">
-                      {new Date(ev.UploadedAt).toLocaleDateString()}
+                      {new Date(ev.UploadedAt).toLocaleDateString('en-IN')}
                     </div>
                   </div>
                 </a>

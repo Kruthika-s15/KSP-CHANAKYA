@@ -210,7 +210,7 @@ export default async function CaseDetailsPage({
                       <div className="text-sm font-medium text-white">
                         {cs.cstype === 'F' ? 'Final Chargesheet' : cs.cstype || 'Chargesheet'}
                       </div>
-                      <div className="text-xs text-zinc-500">Filed on {cs.csdate ? new Date(cs.csdate).toLocaleDateString() : 'N/A'}</div>
+                      <div className="text-xs text-zinc-500">Filed on {cs.csdate ? new Date(cs.csdate).toLocaleDateString('en-IN') : 'N/A'}</div>
                     </div>
                     <div className="text-xs text-zinc-400">IO: {cs.InvestigatingOfficerName || 'N/A'}</div>
                   </div>
@@ -233,7 +233,7 @@ export default async function CaseDetailsPage({
                     <li key={h.CaseStatusHistoryID} className="ml-4">
                       <div className="absolute w-2 h-2 bg-red-500 rounded-full mt-1.5 -left-1"></div>
                       <div className="text-sm font-medium text-white">{h.CaseStatusName}</div>
-                      <div className="text-xs text-zinc-500">{new Date(h.ChangedDate).toLocaleString()}</div>
+                      <div className="text-xs text-zinc-500">{new Date(h.ChangedDate).toLocaleString('en-IN')}</div>
                       {h.Remarks && <div className="text-xs text-zinc-400 mt-1">{h.Remarks}</div>}
                     </li>
                   ))}
